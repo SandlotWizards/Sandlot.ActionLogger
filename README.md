@@ -14,7 +14,7 @@ A structured, hierarchical, and developer-friendly logging utility for tracking 
 - Seamless integration with `ILogger`
 - Developer-friendly fluent syntax
 
-It is also the engine behind the `sandlot-copilot action-logger` CLI verb, used as a diagnostic and training harness. ** Coming Soon
+It is also the engine behind the `sandlot-copilot step-tracker` CLI verb, used as a diagnostic and training harness.
 
 ---
 
@@ -31,33 +31,23 @@ It is also the engine behind the `sandlot-copilot action-logger` CLI verb, used 
 
 ## 🚀 Example Usage
 
-```csharp
-using (_tracker.BeginStep("Initialize environment"))
-{
-    _tracker.Info("Connecting to database...");
-    ConnectToDb();
-
-    _tracker.Info("Seeding initial data...");
-    SeedData();
-
-    _tracker.Success("Initialization complete");
-}
-```
-
-With threshold warning:
-```csharp
-using (_tracker.BeginStep("Fetch remote config", TimeSpan.FromMilliseconds(500)))
-{
-    FetchRemoteConfig();
-}
-```
-
-CLI output:
+**Single-level demo:**
 ```
 1. Initialize environment
   ⟳ Connecting to database...
   ⟳ Seeding initial data...
   ✔ Initialization complete (245ms)
+```
+
+**Multi-level demo:**
+```
+1. Setup
+  1.1. Check prerequisites
+    ⟳ Verifying runtime...
+    ✔ Runtime OK (120ms)
+  1.2. Load configuration
+    ⟳ Loading user settings...
+    ✔ Loaded (210ms)
 2. Fetch remote config
   ⚠️ ✔ Fetch remote config (824ms) — exceeded threshold
 ```
@@ -73,19 +63,23 @@ public interface IActionLoggerService
     string Info(string message, bool logToLogger = false);
     string Success(string message = "✔ Done", bool logToLogger = false);
     string Error(string message, bool logToLogger = true);
+    string Trace(string message, bool logToLogger = false);
+    string Debug(string message, bool logToLogger = false);
+    string Warn(string message, bool logToLogger = true);
+    string Critical(string message, bool logToLogger = true);
 }
 ```
 
 ---
 
-## 🧪 CLI Support – `sandlot-copilot action-logger`
+## 🧪 CLI Support – `sandlot-copilot step-tracker`
 
-This project powers the `action-logger` verb in the `sandlot-copilot` CLI:
+This project powers the `step-tracker` verb in the `sandlot-copilot` CLI:
 
 ```bash
-sandlot-copilot action-logger --use-case U01
-sandlot-copilot action-logger --group struct
-sandlot-copilot action-logger --demo-example
+sandlot-copilot step-tracker --use-case U01
+sandlot-copilot step-tracker --group struct
+sandlot-copilot step-tracker --demo-example
 ```
 
 - 15+ diagnostic use cases (`U01–U15`)
@@ -136,6 +130,6 @@ We welcome contributions! Submit issues or pull requests for improvements, bug f
 
 ---
 
-## 🧭 Authoritative Documentation
+
 
 All details, patterns, and CLI behavior for `ActionLoggerService` and its usage are documented in the file [`ActionLoggerService.md`](./ActionLoggerService.md).
