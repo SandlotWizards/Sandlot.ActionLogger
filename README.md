@@ -6,7 +6,7 @@ A structured, hierarchical, and developer-friendly logging utility for tracking 
 
 ## 📘 Purpose
 
-`Sandlot.ActionLogger` provides a reusable logging abstraction called `StepTrackerService`, enabling:
+`Sandlot.ActionLogger` provides a reusable logging abstraction called `ActionLoggerService`, enabling:
 
 - Visually structured CLI feedback (`✔`, `❌`, `⚠️`, `⟳`)
 - Elapsed time measurement and threshold warnings
