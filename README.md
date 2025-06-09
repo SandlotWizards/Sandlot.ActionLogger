@@ -14,7 +14,7 @@ A structured, hierarchical, and developer-friendly logging utility for tracking 
 - Seamless integration with `ILogger`
 - Developer-friendly fluent syntax
 
-It is also the engine behind the `sui-copilot step-tracker` CLI verb, used as a diagnostic and training harness.
+It is also the engine behind the `sandlot-copilot action-logger` CLI verb, used as a diagnostic and training harness.
 
 ---
 
