@@ -14,7 +14,7 @@ A structured, hierarchical, and developer-friendly logging utility for tracking 
 - Seamless integration with `ILogger`
 - Developer-friendly fluent syntax
 
-It is also the engine behind the `sandlot-copilot action-logger` CLI verb, used as a diagnostic and training harness.
+It is also the engine behind the `sandlot-copilot action-logger` CLI verb, used as a diagnostic and training harness. ** Coming Soon
 
 ---
 
@@ -42,3 +42,100 @@ using (_tracker.BeginStep("Initialize environment"))
 
     _tracker.Success("Initialization complete");
 }
+```
+
+With threshold warning:
+```csharp
+using (_tracker.BeginStep("Fetch remote config", TimeSpan.FromMilliseconds(500)))
+{
+    FetchRemoteConfig();
+}
+```
+
+CLI output:
+```
+1. Initialize environment
+  ⟳ Connecting to database...
+  ⟳ Seeding initial data...
+  ✔ Initialization complete (245ms)
+2. Fetch remote config
+  ⚠️ ✔ Fetch remote config (824ms) — exceeded threshold
+```
+
+---
+
+## 🔌 Interface
+
+```csharp
+public interface IActionLoggerService
+{
+    IDisposable BeginStep(string title, TimeSpan? threshold = null);
+    string Info(string message, bool logToLogger = false);
+    string Success(string message = "✔ Done", bool logToLogger = false);
+    string Error(string message, bool logToLogger = true);
+}
+```
+
+---
+
+## 🧪 CLI Support – `sui-copilot step-tracker`
+
+This project powers the `step-tracker` verb in the `sui-copilot` CLI:
+
+```bash
+sui-copilot step-tracker --use-case U01
+sui-copilot step-tracker --group struct
+sui-copilot step-tracker --demo-example
+```
+
+- 15+ diagnostic use cases (`U01–U15`)
+- Structured test groups (`struct`, `ttl`, `sev`, `devx`)
+- Real-time CLI demonstrations
+
+---
+
+## 🧱 Integration
+
+To use this in your DI container:
+
+```csharp
+services.AddScoped<IActionLoggerService, ActionLoggerService>();
+```
+
+Recommended for scoped lifetimes during CLI commands or background jobs.
+
+Namespaces:
+- Interface: `SharedKernel.Interfaces`
+- Implementation: `SharedKernel.Services`
+
+---
+
+## 📦 Projects
+
+- `Sandlot.ActionLogger` — Core implementation
+- `Sandlot.ActionLogger.Tests` — Unit tests for service behavior
+
+---
+
+## 🛠 Status
+
+✅ **Production-ready**  
+All CLI tooling and operational scripts within the organization are encouraged to standardize on this logging pattern.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## 🙌 Contributing
+
+We welcome contributions! Submit issues or pull requests for improvements, bug fixes, or new CLI diagnostics.
+
+---
+
+## 🧭 Authoritative Documentation
+
+All details, patterns, and CLI behavior for `ActionLoggerService` and its usage are documented in the file [`ActionLoggerService.md`](./ActionLoggerService.md).
