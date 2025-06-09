@@ -1,3 +1,5 @@
+using System;
+
 namespace Sandlot.ActionLogger.Interfaces
 {
     /// <summary>

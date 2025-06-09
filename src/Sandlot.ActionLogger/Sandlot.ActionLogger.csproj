@@ -2,8 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Version>1.0.0</Version>
+    <Authors>SandlotWizard</Authors>
+    <Company>Sandlot Wizards</Company>
+    <PackageId>Sandlot.ActionLogger</PackageId>
+    <Description>Lightweight structured action logging library for .NET</Description>
+    <PackageTags>logging;action;utility;sandlot</PackageTags>
+    <RepositoryUrl>https://github.com/SandlotWizards/Sandlot.ActionLogger</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
