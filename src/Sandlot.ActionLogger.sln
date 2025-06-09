@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandlot.ActionLogger", "Sandlot.ActionLogger\Sandlot.ActionLogger.csproj", "{A8C8FDE1-0B4F-055F-F43B-AB987950E300}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandlot.ActionLogger.Tests", "Sandlot.ActionLogger.Tests\Sandlot.ActionLogger.Tests.csproj", "{F77FBC9E-F8F0-467D-8965-8C0D28B45644}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A8C8FDE1-0B4F-055F-F43B-AB987950E300}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8C8FDE1-0B4F-055F-F43B-AB987950E300}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8C8FDE1-0B4F-055F-F43B-AB987950E300}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8C8FDE1-0B4F-055F-F43B-AB987950E300}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F77FBC9E-F8F0-467D-8965-8C0D28B45644}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F77FBC9E-F8F0-467D-8965-8C0D28B45644}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F77FBC9E-F8F0-467D-8965-8C0D28B45644}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F77FBC9E-F8F0-467D-8965-8C0D28B45644}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B69594F8-684F-4FFE-8472-DDF3A6C97FDA}
+	EndGlobalSection
+EndGlobal
