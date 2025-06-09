@@ -78,14 +78,14 @@ public interface IActionLoggerService
 
 ---
 
-## 🧪 CLI Support – `sui-copilot step-tracker`
+## 🧪 CLI Support – `sandlot-copilot action-logger`
 
-This project powers the `step-tracker` verb in the `sui-copilot` CLI:
+This project powers the `action-logger` verb in the `sandlot-copilot` CLI:
 
 ```bash
-sui-copilot step-tracker --use-case U01
-sui-copilot step-tracker --group struct
-sui-copilot step-tracker --demo-example
+sandlot-copilot action-logger --use-case U01
+sandlot-copilot action-logger --group struct
+sandlot-copilot action-logger --demo-example
 ```
 
 - 15+ diagnostic use cases (`U01–U15`)
@@ -105,8 +105,8 @@ services.AddScoped<IActionLoggerService, ActionLoggerService>();
 Recommended for scoped lifetimes during CLI commands or background jobs.
 
 Namespaces:
-- Interface: `SharedKernel.Interfaces`
-- Implementation: `SharedKernel.Services`
+- Interface: `Sandlot.ActionLogger.Interfaces`
+- Implementation: `Sandlot.ActionLogger.Services`
 
 ---
 
@@ -120,7 +120,7 @@ Namespaces:
 ## 🛠 Status
 
 ✅ **Production-ready**  
-All CLI tooling and operational scripts within the organization are encouraged to standardize on this logging pattern.
+All CLI tooling and operational scripts within an organization are encouraged to standardize on this logging pattern.
 
 ---
 
