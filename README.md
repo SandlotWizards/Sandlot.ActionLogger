@@ -128,8 +128,3 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 We welcome contributions! Submit issues or pull requests for improvements, bug fixes, or new CLI diagnostics.
 
----
-
-
-
-All details, patterns, and CLI behavior for `ActionLoggerService` and its usage are documented in the file [`ActionLoggerService.md`](./ActionLoggerService.md).
