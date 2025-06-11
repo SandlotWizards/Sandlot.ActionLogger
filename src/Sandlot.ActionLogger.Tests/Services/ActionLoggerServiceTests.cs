@@ -88,5 +88,61 @@ namespace Sandlot.ActionLogger.Tests.Services
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
         }
+
+        [Fact]
+        public void ErrorAndMaybeThrow_ShouldLogError_AndReturnValidationResult_WhenThrowIsFalse()
+        {
+            // Arrange
+            var loggerMock = new Mock<ILogger<ActionLoggerService>>();
+            var sut = CreateSUT(loggerMock);
+            var message = "This is a validation failure.";
+
+            // Act
+            var result = sut.ErrorAndMaybeThrow(message, throwException: false);
+
+            // Assert
+            Assert.False(result.IsValid);
+            Assert.Equal(message, result.Message);
+            loggerMock.Verify(
+                x => x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains(message)),
+                    null,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Once);
+        }
+
+        [Fact]
+        public void ErrorAndMaybeThrow_ShouldThrowGenericException_WhenThrowIsTrue_AndNoFactoryProvided()
+        {
+            // Arrange
+            var sut = CreateSUT();
+            var message = "Must throw an exception.";
+
+            // Act & Assert
+            var ex = Assert.Throws<Exception>(() =>
+                sut.ErrorAndMaybeThrow(message, throwException: true)
+            );
+
+            Assert.Equal(message, ex.Message);
+        }
+
+        [Fact]
+        public void ErrorAndMaybeThrow_ShouldThrowCustomException_WhenFactoryIsProvided()
+        {
+            // Arrange
+            var sut = CreateSUT();
+            var message = "Custom failure!";
+            Func<string, Exception> factory = msg => new InvalidOperationException(msg);
+
+            // Act & Assert
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                sut.ErrorAndMaybeThrow(message, throwException: true, exceptionFactory: factory)
+            );
+
+            Assert.Equal(message, ex.Message);
+        }
+
     }
 }
