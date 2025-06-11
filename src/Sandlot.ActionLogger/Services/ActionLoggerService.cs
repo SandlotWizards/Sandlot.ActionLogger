@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Sandlot.ActionLogger.Interfaces;
+using Sandlot.ActionLogger.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,8 +9,8 @@ using System.Linq;
 namespace Sandlot.ActionLogger.Services
 {
     /// <summary>
-    /// Default implementation of IStepTrackerService. Provides structured step tracking with hierarchical
-    /// numbering, visual console output, threshold warnings, and optional structured logging.
+    /// Default implementation of <see cref="IActionLoggerService"/>. Provides structured step tracking
+    /// with hierarchical numbering, visual console output, threshold warnings, and optional structured logging.
     /// </summary>
     public class ActionLoggerService : IActionLoggerService
     {
@@ -96,8 +97,32 @@ namespace Sandlot.ActionLogger.Services
             return message;
         }
 
+        /// <inheritdoc />
         /// <summary>
-        /// Outputs a message to the console with color and optional indentation.
+        /// Logs a validation error and optionally throws an exception of a specified type.
+        /// </summary>
+        /// <param name="message">The message to log and optionally include in the exception.</param>
+        /// <param name="throwException">Determines whether an exception should be thrown after logging.</param>
+        /// <param name="exceptionFactory">Optional factory function to create a custom exception from the message.</param>
+        /// <returns>A failed <see cref="ValidationResult"/> representing the logged validation error.</returns>
+        public ValidationResult ErrorAndMaybeThrow(
+            string message,
+            bool throwException = false,
+            Func<string, Exception>? exceptionFactory = null)
+        {
+            Error(message, logToLogger: true);
+
+            if (throwException)
+            {
+                var ex = exceptionFactory?.Invoke(message) ?? new Exception(message);
+                throw ex;
+            }
+
+            return ValidationResult.Fail(message);
+        }
+
+        /// <summary>
+        /// Outputs a formatted message to the console with optional indentation and highlighting.
         /// </summary>
         private void WriteLine(string message, ConsoleColor color, bool isMajor = false)
         {
@@ -108,7 +133,7 @@ namespace Sandlot.ActionLogger.Services
         }
 
         /// <summary>
-        /// Ends the current step, optionally logging its completion and duration.
+        /// Ends the current step and logs its duration if threshold exceeded.
         /// </summary>
         private void EndStep(string stepTitle, string stepNumber, Stopwatch stopwatch, TimeSpan? threshold, bool logToLogger)
         {
@@ -119,7 +144,8 @@ namespace Sandlot.ActionLogger.Services
             {
                 WriteLine($"⚠️ {message} — exceeded threshold", ConsoleColor.Yellow);
                 if (logToLogger)
-                    _logger?.LogWarning("{Step} SLOW: {Title} took {Elapsed}ms (threshold {Threshold}ms)", stepNumber, stepTitle, elapsed.TotalMilliseconds, threshold.Value.TotalMilliseconds);
+                    _logger?.LogWarning("{Step} SLOW: {Title} took {Elapsed}ms (threshold {Threshold}ms)",
+                        stepNumber, stepTitle, elapsed.TotalMilliseconds, threshold.Value.TotalMilliseconds);
             }
             else
             {
@@ -133,7 +159,7 @@ namespace Sandlot.ActionLogger.Services
         }
 
         /// <summary>
-        /// Represents a disposable step context. Calls back to the tracker upon disposal.
+        /// Disposable context that ends a step when disposed.
         /// </summary>
         private sealed class StepContext : IDisposable
         {
@@ -145,9 +171,6 @@ namespace Sandlot.ActionLogger.Services
             private readonly bool _logToLogger;
             private bool _disposed;
 
-            /// <summary>
-            /// Initializes a new instance of the <see cref="StepContext"/> class.
-            /// </summary>
             public StepContext(ActionLoggerService tracker, string title, string stepNumber, TimeSpan? threshold, bool logToLogger)
             {
                 _tracker = tracker;
@@ -159,9 +182,6 @@ namespace Sandlot.ActionLogger.Services
                 _stopwatch = Stopwatch.StartNew();
             }
 
-            /// <summary>
-            /// Ends the step when the context is disposed.
-            /// </summary>
             public void Dispose()
             {
                 if (_disposed) return;
