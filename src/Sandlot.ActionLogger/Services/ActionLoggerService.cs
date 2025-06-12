@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Sandlot.ActionLogger.Interfaces;
+using Sandlot.ActionLogger.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,8 +28,8 @@ namespace Sandlot.ActionLogger.Services
             _stepNumberStack.Push(_currentStep.ToString());
             var stepNumber = string.Join('.', _stepNumberStack.Reverse());
             WriteLine($"{stepNumber}. {title}", ConsoleColor.White, isMajor: true);
-            if (logToLogger)
-                _logger?.LogInformation("{Step} BEGIN: {Title}", stepNumber, title);
+            if (logToLogger && _logger is not null)
+                _logger.LogInformation("{Step} BEGIN: {Title}", stepNumber, title);
 
             var activity = _activitySource.StartActivity(title, ActivityKind.Internal);
             return new StepContext(this, title, stepNumber, threshold, logToLogger, activity);
@@ -36,64 +37,50 @@ namespace Sandlot.ActionLogger.Services
 
         public string Trace(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
-            WriteLine($"[trace] {message}", ConsoleColor.Cyan);
-            if (logToLogger) _logger?.LogTrace(message);
-            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
-            return message;
+            if (logToLogger && _logger is not null) _logger.LogTrace(message);
+            return Log("trace", message, ConsoleColor.Cyan, throwException, exceptionFactory);
         }
 
         public string Debug(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
-            WriteLine($"[dbg] {message}", ConsoleColor.DarkGray);
-            if (logToLogger) _logger?.LogDebug(message);
-            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
-            return message;
+            if (logToLogger && _logger is not null) _logger.LogDebug(message);
+            return Log("dbg", message, ConsoleColor.DarkGray, throwException, exceptionFactory);
         }
 
         public string Info(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
-            WriteLine($"⟳ {message}", ConsoleColor.Gray);
-            if (logToLogger) _logger?.LogInformation(message);
-            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
-            return message;
+            if (logToLogger && _logger is not null) _logger.LogInformation(message);
+            return Log("⟳", message, ConsoleColor.Gray, throwException, exceptionFactory);
         }
 
         public string Warning(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
-            WriteLine($"⚠️ {message}", ConsoleColor.Yellow);
-            if (logToLogger) _logger?.LogWarning(message);
-            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
-            return message;
+            if (logToLogger && _logger is not null) _logger.LogWarning(message);
+            return Log("⚠️", message, ConsoleColor.Yellow, throwException, exceptionFactory);
         }
 
         public string Error(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
-            WriteLine($"❌ {message}", ConsoleColor.Red);
-            if (logToLogger) _logger?.LogError(message);
-            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
-            return message;
+            if (logToLogger && _logger is not null) _logger.LogError(message);
+            return Log("❌", message, ConsoleColor.Red, throwException, exceptionFactory);
         }
 
         public string Critical(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
-            WriteLine($"🔥 {message}", ConsoleColor.Red);
-            if (logToLogger) _logger?.LogCritical(message);
-            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
-            return message;
+            if (logToLogger && _logger is not null) _logger.LogCritical(message);
+            return Log("🔥", message, ConsoleColor.Red, throwException, exceptionFactory);
         }
 
         public string Success(string message = "✔ Done", bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = false)
         {
-            WriteLine(message, ConsoleColor.Green);
-            if (logToLogger) _logger?.LogInformation(message);
-            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
-            return message;
+            if (logToLogger && _logger is not null) _logger.LogInformation(message);
+            return Log("✔", message, ConsoleColor.Green, throwException, exceptionFactory);
         }
 
         public string Message(string message, ConsoleColor color = ConsoleColor.Gray, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = false)
         {
             WriteLine(message, color);
-            if (logToLogger) _logger?.LogInformation(message);
+            if (logToLogger && _logger is not null) _logger.LogInformation(message);
             if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
             return message;
         }
@@ -108,11 +95,32 @@ namespace Sandlot.ActionLogger.Services
 
         public void PrintTrailer(ConsoleColor color = ConsoleColor.Gray)
         {
-            Console.WriteLine(); // top blank line
+            Console.WriteLine();
             Console.ForegroundColor = color;
             Console.WriteLine(new string('=', 120));
             Console.ResetColor();
-            Console.WriteLine(); // bottom blank line
+            Console.WriteLine();
+        }
+
+        public ValidationResult TraceResult(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true) => ValidationResultFactory(Trace(message, throwException, exceptionFactory, logToLogger));
+        public ValidationResult DebugResult(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true) => ValidationResultFactory(Debug(message, throwException, exceptionFactory, logToLogger));
+        public ValidationResult InfoResult(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true) => ValidationResultFactory(Info(message, throwException, exceptionFactory, logToLogger));
+        public ValidationResult WarningResult(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true) => ValidationResultFactory(Warning(message, throwException, exceptionFactory, logToLogger));
+        public ValidationResult ErrorResult(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true) => ValidationResultFactory(Error(message, throwException, exceptionFactory, logToLogger), false);
+        public ValidationResult CriticalResult(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true) => ValidationResultFactory(Critical(message, throwException, exceptionFactory, logToLogger), false);
+        public ValidationResult SuccessResult(string message = "✔ Done", bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = false) => ValidationResultFactory(Success(message, throwException, exceptionFactory, logToLogger));
+        public ValidationResult MessageResult(string message, ConsoleColor color = ConsoleColor.Gray, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = false) => ValidationResultFactory(Message(message, color, throwException, exceptionFactory, logToLogger));
+
+        private string Log(string prefix, string message, ConsoleColor color, bool throwException, Func<string, Exception>? exceptionFactory)
+        {
+            WriteLine($"[{prefix}] {message}", color);
+            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
+            return message;
+        }
+
+        private ValidationResult ValidationResultFactory(string message, bool isSuccess = true)
+        {
+            return isSuccess ? ValidationResult.Success() : ValidationResult.Fail(message);
         }
 
         private void WriteLine(string message, ConsoleColor color, bool isMajor = false)
@@ -131,15 +139,15 @@ namespace Sandlot.ActionLogger.Services
             if (threshold.HasValue && elapsed > threshold.Value)
             {
                 WriteLine($"⚠️ {message} — exceeded threshold", ConsoleColor.Yellow);
-                if (logToLogger)
-                    _logger?.LogWarning("{Step} SLOW: {Title} took {Elapsed}ms (threshold {Threshold}ms)",
+                if (logToLogger && _logger is not null)
+                    _logger.LogWarning("{Step} SLOW: {Title} took {Elapsed}ms (threshold {Threshold}ms)",
                         stepNumber, stepTitle, elapsed.TotalMilliseconds, threshold.Value.TotalMilliseconds);
             }
             else
             {
                 WriteLine(message, ConsoleColor.Green);
-                if (logToLogger)
-                    _logger?.LogInformation("{Step} DONE: {Title} ({Elapsed}ms)", stepNumber, stepTitle, elapsed.TotalMilliseconds);
+                if (logToLogger && _logger is not null)
+                    _logger.LogInformation("{Step} DONE: {Title} ({Elapsed}ms)", stepNumber, stepTitle, elapsed.TotalMilliseconds);
             }
 
             _stepNumberStack.Pop();
