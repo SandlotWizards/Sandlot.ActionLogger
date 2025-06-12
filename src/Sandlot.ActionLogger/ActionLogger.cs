@@ -1,7 +1,7 @@
 ﻿using Sandlot.ActionLogger.Interfaces;
 using System;
 
-namespace Sandlot.ActionLogger.Services
+namespace Sandlot.ActionLogger
 {
     public static class ActionLogger
     {
