@@ -3,7 +3,7 @@ using System;
 
 namespace Sandlot.ActionLogger
 {
-    public static class ActionLogger
+    public static class ActionLog
     {
         private static IActionLoggerService _instance;
 
