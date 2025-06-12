@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Sandlot.ActionLogger.Interfaces;
-using Sandlot.ActionLogger.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,27 +7,20 @@ using System.Linq;
 
 namespace Sandlot.ActionLogger.Services
 {
-    /// <summary>
-    /// Default implementation of <see cref="IActionLoggerService"/>. Provides structured step tracking
-    /// with hierarchical numbering, visual console output, threshold warnings, and optional structured logging.
-    /// </summary>
     public class ActionLoggerService : IActionLoggerService
     {
+        private static readonly ActivitySource _activitySource = new("Sandlot.ActionLogger");
+
         private readonly ILogger<ActionLoggerService>? _logger;
         private readonly Stack<string> _stepNumberStack = new();
         private int _currentStep = 0;
         private int _indentLevel = 0;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ActionLoggerService"/> class.
-        /// </summary>
-        /// <param name="logger">Optional logger for structured output.</param>
         public ActionLoggerService(ILogger<ActionLoggerService>? logger = null)
         {
             _logger = logger;
         }
 
-        /// <inheritdoc />
         public IDisposable BeginStep(string title, TimeSpan? threshold = null, bool logToLogger = false)
         {
             _currentStep++;
@@ -38,104 +30,100 @@ namespace Sandlot.ActionLogger.Services
             if (logToLogger)
                 _logger?.LogInformation("{Step} BEGIN: {Title}", stepNumber, title);
 
-            return new StepContext(this, title, stepNumber, threshold, logToLogger);
+            var activity = _activitySource.StartActivity(title, ActivityKind.Internal);
+            return new StepContext(this, title, stepNumber, threshold, logToLogger, activity);
         }
 
-        /// <inheritdoc />
-        public string Trace(string message, bool logToLogger = false)
+        public string Trace(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
             WriteLine($"[trace] {message}", ConsoleColor.Cyan);
             if (logToLogger) _logger?.LogTrace(message);
+            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
             return message;
         }
 
-        /// <inheritdoc />
-        public string Debug(string message, bool logToLogger = false)
+        public string Debug(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
             WriteLine($"[dbg] {message}", ConsoleColor.DarkGray);
             if (logToLogger) _logger?.LogDebug(message);
+            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
             return message;
         }
 
-        /// <inheritdoc />
-        public string Info(string message, bool logToLogger = false)
+        public string Info(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
             WriteLine($"⟳ {message}", ConsoleColor.Gray);
             if (logToLogger) _logger?.LogInformation(message);
+            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
             return message;
         }
 
-        /// <inheritdoc />
-        public string Warning(string message, bool logToLogger = true)
+        public string Warning(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
             WriteLine($"⚠️ {message}", ConsoleColor.Yellow);
             if (logToLogger) _logger?.LogWarning(message);
+            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
             return message;
         }
 
-        /// <inheritdoc />
-        public string Error(string message, bool logToLogger = true)
+        public string Error(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
             WriteLine($"❌ {message}", ConsoleColor.Red);
             if (logToLogger) _logger?.LogError(message);
+            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
             return message;
         }
 
-        /// <inheritdoc />
-        public string Critical(string message, bool logToLogger = true)
+        public string Critical(string message, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = true)
         {
             WriteLine($"🔥 {message}", ConsoleColor.Red);
             if (logToLogger) _logger?.LogCritical(message);
+            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
             return message;
         }
 
-        /// <inheritdoc />
-        public string Success(string message = "✔ Done", bool logToLogger = false)
+        public string Success(string message = "✔ Done", bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = false)
         {
             WriteLine(message, ConsoleColor.Green);
             if (logToLogger) _logger?.LogInformation(message);
+            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
             return message;
         }
 
-        /// <inheritdoc />
-        /// <summary>
-        /// Logs a validation error and optionally throws an exception of a specified type.
-        /// </summary>
-        /// <param name="message">The message to log and optionally include in the exception.</param>
-        /// <param name="throwException">Determines whether an exception should be thrown after logging.</param>
-        /// <param name="exceptionFactory">Optional factory function to create a custom exception from the message.</param>
-        /// <returns>A failed <see cref="ValidationResult"/> representing the logged validation error.</returns>
-        public ValidationResult ErrorAndMaybeThrow(
-            string message,
-            bool throwException = false,
-            Func<string, Exception>? exceptionFactory = null)
+        public string Message(string message, ConsoleColor color = ConsoleColor.Gray, bool throwException = false, Func<string, Exception>? exceptionFactory = null, bool logToLogger = false)
         {
-            Error(message, logToLogger: true);
-
-            if (throwException)
-            {
-                var ex = exceptionFactory?.Invoke(message) ?? new Exception(message);
-                throw ex;
-            }
-
-            return ValidationResult.Fail(message);
+            WriteLine(message, color);
+            if (logToLogger) _logger?.LogInformation(message);
+            if (throwException) throw exceptionFactory?.Invoke(message) ?? new Exception(message);
+            return message;
         }
 
-        /// <summary>
-        /// Outputs a formatted message to the console with optional indentation and highlighting.
-        /// </summary>
+        public void PrintHeader(ConsoleColor color = ConsoleColor.Gray)
+        {
+            Console.WriteLine();
+            Console.ForegroundColor = color;
+            Console.WriteLine(new string('=', 120));
+            Console.ResetColor();
+        }
+
+        public void PrintTrailer(ConsoleColor color = ConsoleColor.Gray)
+        {
+            Console.WriteLine(); // top blank line
+            Console.ForegroundColor = color;
+            Console.WriteLine(new string('=', 120));
+            Console.ResetColor();
+            Console.WriteLine(); // bottom blank line
+        }
+
         private void WriteLine(string message, ConsoleColor color, bool isMajor = false)
         {
             if (isMajor) Console.WriteLine();
             Console.ForegroundColor = color;
-            Console.WriteLine(new string(' ', _indentLevel * 2) + message);
+            Console.WriteLine(new string(' ', _indentLevel * 2 + 1) + message);
             Console.ResetColor();
         }
 
-        /// <summary>
-        /// Ends the current step and logs its duration if threshold exceeded.
-        /// </summary>
-        private void EndStep(string stepTitle, string stepNumber, Stopwatch stopwatch, TimeSpan? threshold, bool logToLogger)
+        private void EndStep(string stepTitle, string stepNumber, Stopwatch stopwatch, TimeSpan? threshold, bool logToLogger, Activity? activity)
         {
             var elapsed = stopwatch.Elapsed;
             var message = $"✔ {stepTitle} ({elapsed.TotalMilliseconds:N0}ms)";
@@ -156,11 +144,13 @@ namespace Sandlot.ActionLogger.Services
 
             _stepNumberStack.Pop();
             _indentLevel--;
+
+            activity?.SetTag("step.title", stepTitle);
+            activity?.SetTag("step.number", stepNumber);
+            activity?.SetTag("step.elapsedMs", elapsed.TotalMilliseconds);
+            activity?.Stop();
         }
 
-        /// <summary>
-        /// Disposable context that ends a step when disposed.
-        /// </summary>
         private sealed class StepContext : IDisposable
         {
             private readonly ActionLoggerService _tracker;
@@ -169,15 +159,17 @@ namespace Sandlot.ActionLogger.Services
             private readonly Stopwatch _stopwatch;
             private readonly TimeSpan? _threshold;
             private readonly bool _logToLogger;
+            private readonly Activity? _activity;
             private bool _disposed;
 
-            public StepContext(ActionLoggerService tracker, string title, string stepNumber, TimeSpan? threshold, bool logToLogger)
+            public StepContext(ActionLoggerService tracker, string title, string stepNumber, TimeSpan? threshold, bool logToLogger, Activity? activity)
             {
                 _tracker = tracker;
                 _title = title;
                 _stepNumber = stepNumber;
                 _threshold = threshold;
                 _logToLogger = logToLogger;
+                _activity = activity;
                 _tracker._indentLevel++;
                 _stopwatch = Stopwatch.StartNew();
             }
@@ -187,7 +179,7 @@ namespace Sandlot.ActionLogger.Services
                 if (_disposed) return;
                 _disposed = true;
                 _stopwatch.Stop();
-                _tracker.EndStep(_title, _stepNumber, _stopwatch, _threshold, _logToLogger);
+                _tracker.EndStep(_title, _stepNumber, _stopwatch, _threshold, _logToLogger, _activity);
             }
         }
     }

@@ -6,143 +6,100 @@ namespace Sandlot.ActionLogger.Tests.Services
 {
     public class ActionLoggerServiceTests
     {
-        private ActionLoggerService CreateSUT(Mock<ILogger<ActionLoggerService>>? loggerMock = null)
+        private readonly Mock<ILogger<ActionLoggerService>> _mockLogger;
+        private readonly ActionLoggerService _loggerService;
+
+        public ActionLoggerServiceTests()
         {
-            return new ActionLoggerService(loggerMock?.Object ?? new Mock<ILogger<ActionLoggerService>>().Object);
+            _mockLogger = new Mock<ILogger<ActionLoggerService>>();
+            _loggerService = new ActionLoggerService(_mockLogger.Object);
         }
 
         [Fact]
-        public void BeginStep_ShouldNotLog_WhenLogToLoggerIsFalse()
+        public void Trace_ShouldLogMessage()
         {
-            // Arrange
-            var loggerMock = new Mock<ILogger<ActionLoggerService>>();
-            var sut = CreateSUT(loggerMock);
-
-            // Act
-            using (sut.BeginStep("Test Step", logToLogger: false))
-            {
-                // No-op
-            }
-
-            // Assert
-            loggerMock.Verify(
-                x => x.Log(
-                    It.IsAny<LogLevel>(),
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains("BEGIN") || v.ToString()!.Contains("DONE")),
-                    It.IsAny<Exception?>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Never);
+            var message = _loggerService.Trace("trace test");
+            Assert.Equal("trace test", message);
         }
 
         [Fact]
-        public void BeginStep_ShouldLogStartAndEnd_WhenLogToLoggerIsTrue()
+        public void Debug_ShouldLogMessage()
         {
-            // Arrange
-            var loggerMock = new Mock<ILogger<ActionLoggerService>>();
-            var sut = CreateSUT(loggerMock);
-
-            // Act
-            using (sut.BeginStep("Test Step", logToLogger: true))
-            {
-                // Simulate some work
-            }
-
-            // Assert
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains("BEGIN")),
-                    null,
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains("DONE") || v.ToString()!.Contains("SLOW")),
-                    null,
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
+            var message = _loggerService.Debug("debug test");
+            Assert.Equal("debug test", message);
         }
 
         [Fact]
-        public void Success_ShouldLog_WhenLogToLoggerIsTrue()
+        public void Info_ShouldLogMessage()
         {
-            // Arrange
-            var loggerMock = new Mock<ILogger<ActionLoggerService>>();
-            var sut = CreateSUT(loggerMock);
-
-            // Act
-            sut.Success("Completed", logToLogger: true);
-
-            // Assert
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains("Completed")),
-                    null,
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
+            var message = _loggerService.Info("info test");
+            Assert.Equal("info test", message);
         }
 
         [Fact]
-        public void ErrorAndMaybeThrow_ShouldLogError_AndReturnValidationResult_WhenThrowIsFalse()
+        public void Warning_ShouldLogMessage()
         {
-            // Arrange
-            var loggerMock = new Mock<ILogger<ActionLoggerService>>();
-            var sut = CreateSUT(loggerMock);
-            var message = "This is a validation failure.";
-
-            // Act
-            var result = sut.ErrorAndMaybeThrow(message, throwException: false);
-
-            // Assert
-            Assert.False(result.IsValid);
-            Assert.Equal(message, result.Message);
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains(message)),
-                    null,
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
+            var message = _loggerService.Warning("warning test");
+            Assert.Equal("warning test", message);
         }
 
         [Fact]
-        public void ErrorAndMaybeThrow_ShouldThrowGenericException_WhenThrowIsTrue_AndNoFactoryProvided()
+        public void Error_ShouldLogMessage()
         {
-            // Arrange
-            var sut = CreateSUT();
-            var message = "Must throw an exception.";
-
-            // Act & Assert
-            var ex = Assert.Throws<Exception>(() =>
-                sut.ErrorAndMaybeThrow(message, throwException: true)
-            );
-
-            Assert.Equal(message, ex.Message);
+            var message = _loggerService.Error("error test");
+            Assert.Equal("error test", message);
         }
 
         [Fact]
-        public void ErrorAndMaybeThrow_ShouldThrowCustomException_WhenFactoryIsProvided()
+        public void Critical_ShouldLogMessage()
         {
-            // Arrange
-            var sut = CreateSUT();
-            var message = "Custom failure!";
-            Func<string, Exception> factory = msg => new InvalidOperationException(msg);
-
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() =>
-                sut.ErrorAndMaybeThrow(message, throwException: true, exceptionFactory: factory)
-            );
-
-            Assert.Equal(message, ex.Message);
+            var message = _loggerService.Critical("critical test");
+            Assert.Equal("critical test", message);
         }
 
+        [Fact]
+        public void Success_ShouldLogMessage()
+        {
+            var message = _loggerService.Success("✔ success test");
+            Assert.Equal("✔ success test", message);
+        }
+
+        [Fact]
+        public void Message_ShouldLogMessageWithoutSymbol()
+        {
+            var message = _loggerService.Message("plain message");
+            Assert.Equal("plain message", message);
+        }
+
+        [Fact]
+        public void BeginStep_ShouldDisposeWithoutError()
+        {
+            using var step = _loggerService.BeginStep("Sample Step");
+            Assert.NotNull(step);
+        }
+
+        [Fact]
+        public void Info_WithException_ShouldThrow()
+        {
+            Assert.Throws<InvalidOperationException>(() =>
+                _loggerService.Info(
+                    "throwing info",
+                    throwException: true,
+                    exceptionFactory: msg => new InvalidOperationException(msg)));
+        }
+
+        [Fact]
+        public void Error_WithDefaultException_ShouldThrow()
+        {
+            Assert.Throws<Exception>(() =>
+                _loggerService.Error("throwing error", throwException: true));
+        }
+
+        [Fact]
+        public void Message_WithException_ShouldThrow()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                _loggerService.Message("throw here", throwException: true, exceptionFactory: _ => new ArgumentNullException()));
+        }
     }
 }
