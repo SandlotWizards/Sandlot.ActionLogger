@@ -7,6 +7,8 @@ namespace Sandlot.ActionLogger
     {
         private static IActionLoggerService _instance;
 
+        public static bool IsInitialized { get; private set; }
+
         public static void Initialize(IActionLoggerService service)
         {
             _instance = service;
